@@ -137,30 +137,30 @@ class NeuralNetwork:
         ss = X.shape[0]  # Number of samples
 
         # Compute the derivative of the loss w.r.t Net_output
-        # dZ_output: (ss, os)
-        dZ_output = self.Z_output - target_output
+        # dL_dZ_output: (ss, os)
+        dL_dZ_output = self.Z_output - target_output  # dL/dZ for output layer
 
         # Compute the derivatives of loss w.r.t weights and biases between hidden and output layer
-        # dW_hidden_output: (hs, os)
-        # db_output: (1, os)
-        dW_hidden_output = (1 / ss) * np.dot(self.A_hidden.T, dZ_output)
-        db_output = (1 / ss) * np.sum(dZ_output, axis=0, keepdims=True)
+        # dL_dW_hidden_output: (hs, os)
+        # dL_db_output: (1, os)
+        dL_dW_hidden_output = (1 / ss) * np.dot(self.A_hidden.T, dL_dZ_output)  # dL/dW
+        dL_db_output = (1 / ss) * np.sum(dL_dZ_output, axis=0, keepdims=True)  # dL/db
 
         # Compute the derivative of the loss w.r.t A_hidden
-        # dA_hidden: (ss, hs)
-        dA_hidden = np.dot(dZ_output, self.weights_hidden_output.T)
+        # dL_dA_hidden: (ss, hs)
+        dL_dA_hidden = np.dot(dL_dZ_output, self.weights_hidden_output.T)
 
         # Compute the derivative of the loss w.r.t Z_hidden
-        # dZ_hidden: (ss, hs)
-        dZ_hidden = dA_hidden * self.activation_derivative(self.Z_hidden)
+        # dL_dZ_hidden: (ss, hs)
+        dL_dZ_hidden = dL_dA_hidden * self.activation_derivative(self.Z_hidden)
 
         # Compute the derivatives w.r.t weights and biases between input and hidden layer
-        # dW_input_hidden: (is, hs)
-        # db_hidden: (1, hs)
-        dW_input_hidden = (1 / ss) * np.dot(X.T, dZ_hidden)
-        db_hidden = (1 / ss) * np.sum(dZ_hidden, axis=0, keepdims=True)
+        # dL_dW_input_hidden: (is, hs)
+        # dL_db_hidden: (1, hs)
+        dL_dW_input_hidden = (1 / ss) * np.dot(X.T, dL_dZ_hidden)
+        dL_db_hidden = (1 / ss) * np.sum(dL_dZ_hidden, axis=0, keepdims=True)
 
-        return dW_input_hidden, db_hidden, dW_hidden_output, db_output
+        return dL_dW_input_hidden, dL_db_hidden, dL_dW_hidden_output, dL_db_output
 
     def train(self, X, target_output, epochs, learning_rate):
         for _ in range(epochs):
@@ -172,17 +172,17 @@ class NeuralNetwork:
             self.loss_history.append(loss)
 
             # Backward propagation
-            dW_input_hidden, db_hidden, dW_hidden_output, db_output = self.backward_propagation(X, target_output)
+            dL_dW_input_hidden, dL_db_hidden, dL_dW_hidden_output, dL_db_output = self.backward_propagation(X, target_output)
 
             # Update weights and biases
-            self.weights_input_hidden -= learning_rate * dW_input_hidden
-            self.bias_hidden -= learning_rate * db_hidden
-            self.weights_hidden_output -= learning_rate * dW_hidden_output
-            self.bias_output -= learning_rate * db_output
+            self.weights_input_hidden -= learning_rate * dL_dW_input_hidden
+            self.bias_hidden -= learning_rate * dL_db_hidden
+            self.weights_hidden_output -= learning_rate * dL_dW_hidden_output
+            self.bias_output -= learning_rate * dL_db_output
 
     def mean_squared_error(self, y_true, y_pred):
         """Computes the Mean Squared Error AKA Loss."""
-        return np.mean((y_true - y_pred) ** 2)
+        return 1/2 * np.mean((y_true - y_pred) ** 2)
 
     def plot_loss(self):
         """Plot the loss over epochs."""

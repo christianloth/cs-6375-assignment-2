@@ -224,9 +224,15 @@ if __name__ == "__main__":
     activation_functions = ["sigmoid", "tanh", "relu"]
     results = []
 
-    fig, axes = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 15))
-    fig.tight_layout(pad=5.0)
-    fig.suptitle('Loss with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
+    # Figure for Loss plots
+    fig_loss, axes_loss = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
+    fig_loss.tight_layout(pad=5.0)
+    fig_loss.suptitle('Loss with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
+
+    # Figure for Residual plots
+    fig_residuals, axes_residuals = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
+    fig_residuals.tight_layout(pad=5.0)
+    fig_residuals.suptitle('Residuals with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
 
     for i, lr in enumerate(learning_rates):
         for j, act_fn in enumerate(activation_functions):
@@ -242,12 +248,24 @@ if __name__ == "__main__":
             print(f"Learning Rate: {lr}, Activation Function: {act_fn}")
             print(f"Training MSE: {mse_train:.3f}")
             print(f"Test MSE: {mse_test:.3f}")
-            print("=" * 40)
+            print("=" * 60)
 
-            axes[i, j].plot(nn.loss_history)
-            axes[i, j].set_title(f'Momentum: LR={lr}, AF={act_fn}')
-            axes[i, j].set_xlabel('Iterations')
-            axes[i, j].set_ylabel('Loss')
+            # Loss plot
+            axes_loss[i, j].plot(nn.loss_history)
+            axes_loss[i, j].set_title(f'Momentum Loss: LR={lr}, AF={act_fn}')
+            axes_loss[i, j].set_xlabel('Iterations')
+            axes_loss[i, j].set_ylabel('Loss')
+
+            # Residual plot
+            residuals_train = y_train_reshaped - predictions_train
+            residuals_test = y_test_reshaped - predictions_test
+            axes_residuals[i, j].scatter(predictions_train, residuals_train, s=10, color='b', label='Train')
+            axes_residuals[i, j].scatter(predictions_test, residuals_test, s=10, color='r', label='Test')
+            axes_residuals[i, j].hlines(0, min(predictions_train), max(predictions_train), colors='k', linewidth=2)
+            axes_residuals[i, j].set_title(f'Residuals: LR={lr}, AF={act_fn}')
+            axes_residuals[i, j].set_xlabel('Predictions')
+            axes_residuals[i, j].set_ylabel('Residuals')
+            axes_residuals[i, j].legend()
 
             results.append((lr, act_fn, mse_train, mse_test))
 
@@ -255,3 +273,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(results, columns=["Learning Rate", "Activation Function", "Training MSE", "Test MSE"])
     print(df)
+

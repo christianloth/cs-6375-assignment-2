@@ -20,20 +20,20 @@ class WineQualityDataPreprocessor:
         self.y_test = None
 
     def preprocess(self):
-        # Combine the datasets and create wine_type feature
+        # Merge the datasets and create wine_type feature
         self.red_wine['wine_type'] = 0
         self.white_wine['wine_type'] = 1
         combined_data = pd.concat([self.red_wine, self.white_wine], axis=0)
 
-        # Separate features and target variable
+        # Separate features and target var
         X = combined_data.drop('quality', axis=1)
         y = combined_data['quality']
 
-        # Normalize the data with sklearn
+        # Normalize data
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
 
-        # Split data into training and testing sets (80% train, 20% test)
+        # Split the data into 80% train, 20% test
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X_scaled, y, test_size=0.2, random_state=42
         )
@@ -43,19 +43,11 @@ class WineQualityDataPreprocessor:
 
 class NeuralNetwork:
     """
-    A basic feedforward neural network class.
-
-    Attributes:
-        input_size (int): Number of neurons in the input layer.
-        hidden_size (int): Number of neurons in the hidden layer.
-        output_size (int): Number of neurons in the output layer.
-        activation_function (str): Type of activation function to be used in the hidden layer.
-
-    Matrix notation documentation:
+    Matrix notation:
         ss: Number of samples in the dataset.
-        is: Number of features (in this case, 12).
+        is: Number of features.
         hs: Number of neurons in the hidden layer.
-        os: Number of neurons in the output layer (1 for our regression approach).
+        os: Number of neurons in the output layer.
     """
 
     def __init__(self, input_size, hidden_size, output_size=1, activation_function="sigmoid", gamma=0.9):
@@ -69,7 +61,7 @@ class NeuralNetwork:
 
         self.activation_function = activation_function
 
-        # Weights and biases initialization
+        # Weights and biases initialization with random vals
         self.weights_input_hidden = np.random.randn(self.input_size, self.hidden_size) * 0.01  # weights from hidden to input
         self.bias_hidden = np.zeros((1, self.hidden_size))
 
@@ -129,46 +121,48 @@ class NeuralNetwork:
         elif self.activation_function == "relu":
             return self.relu_derivative(x)
 
-    def forward_propagation(self, X):  # X: (ss, is)
+    def forward_propagation(self, X):  # X dimensions: (ss, is)
+        # Note: `Z` means linear output and `A` means activation here
+
         # Linear output for hidden layer
-        # Z_hidden: (ss, hs)
+        # Z_hidden dimensions: (ss, hs)
         self.Z_hidden = np.dot(X, self.weights_input_hidden) + self.bias_hidden
 
         # Activation for hidden layer
-        # A_hidden: (ss, hs)
+        # A_hidden dimensions: (ss, hs)
         self.A_hidden = self.activation(self.Z_hidden)
 
         # Linear output for output layer
-        # Z_output: (ss, os)
+        # Z_output dimensions: (ss, os)
         self.Z_output = np.dot(self.A_hidden, self.weights_hidden_output) + self.bias_output
 
         # We don't apply activation function to the output layer because wine quality output is between 1 and 10. It's not a binary classification.
         return self.Z_output
 
-    def backward_propagation(self, X, target_output):  # X: (ss, is), y: (ss, os)
+    def backward_propagation(self, X, target_output):  # X dimensions: (ss, is), y dimensions: (ss, os)
         ss = X.shape[0]  # Number of samples
 
         # Compute the derivative of the loss w.r.t Net_output
-        # dZ_output: (ss, os)
+        # dZ_output dimensions: (ss, os)
         dZ_output = self.Z_output - target_output  # dL/dZ
 
         # Compute the derivatives of loss w.r.t weights and biases between hidden and output layer
-        # dW_hidden_output: (hs, os)
-        # db_output: (1, os)
+        # dW_hidden_output dimensions: (hs, os)
+        # db_output dimensions: (1, os)
         dW_hidden_output = (1 / ss) * np.dot(self.A_hidden.T, dZ_output)  # dL/dW
         db_output = (1 / ss) * np.sum(dZ_output, axis=0, keepdims=True)  # dL/db
 
         # Compute the derivative of the loss w.r.t A_hidden
-        # dA_hidden: (ss, hs)
+        # dA_hidden dimensions: (ss, hs)
         dA_hidden = np.dot(dZ_output, self.weights_hidden_output.T)  # dA/dZ
 
         # Compute the derivative of the loss w.r.t Z_hidden
-        # dZ_hidden: (ss, hs)
+        # dZ_hidden dimensions: (ss, hs)
         dZ_hidden = dA_hidden * self.activation_derivative(self.Z_hidden)  # dL/dZ
 
         # Compute the derivatives w.r.t weights and biases between input and hidden layer
-        # dW_input_hidden: (is, hs)
-        # db_hidden: (1, hs)
+        # dW_input_hidden dimensions: (is, hs)
+        # db_hidden dimensions: (1, hs)
         dW_input_hidden = (1 / ss) * np.dot(X.T, dZ_hidden)  # dW/dZ
         db_hidden = (1 / ss) * np.sum(dZ_hidden, axis=0, keepdims=True)  # dL/db
 
@@ -219,12 +213,6 @@ if __name__ == "__main__":
     fig_loss.subplots_adjust(top=0.9)
     fig_loss.suptitle(f'Loss with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
 
-    # Figure for Residual plots
-    fig_residuals, axes_residuals = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
-    fig_residuals.tight_layout(pad=5.0)
-    fig_residuals.subplots_adjust(top=0.9)
-    fig_residuals.suptitle(f'Residuals with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
-
     # Figure for Weight changes plots
     fig_weights, axes_weights = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
     fig_weights.tight_layout(pad=5.0)
@@ -254,17 +242,6 @@ if __name__ == "__main__":
             axes_loss[i, j].set_ylabel('Loss')
 
             results.append((lr, act_fn, mse_train, mse_test))
-
-            # Residual plot
-            residuals_train = y_train_reshaped - predictions_train
-            residuals_test = y_test_reshaped - predictions_test
-            axes_residuals[i, j].scatter(predictions_train, residuals_train, s=10, color='b', label='Train')
-            axes_residuals[i, j].scatter(predictions_test, residuals_test, s=10, color='r', label='Test')
-            axes_residuals[i, j].hlines(0, min(predictions_train), max(predictions_train), colors='k', linewidth=2)
-            axes_residuals[i, j].set_title(f'Residuals: LR={lr}, AF={act_fn}')
-            axes_residuals[i, j].set_xlabel('Predictions')
-            axes_residuals[i, j].set_ylabel('Residuals')
-            axes_residuals[i, j].legend()
 
             # Plot weight changes
             # for each set of weights at each iteration, this computes the sum of the absolute values of all weights in that set and plots that sum over time.

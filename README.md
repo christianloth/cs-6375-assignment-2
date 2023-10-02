@@ -46,7 +46,7 @@ After setting up the environment and installing the necessary dependencies:
     python assignment.py
     ```
    - Note you must wait after executing the command. It can take a bit for the plots to display depending on how fast your processor is.
-   - 3 plots will be displayed, a loss plot, a weight changes plot, and a residuals plot.
+   - Two plots will be displayed, a loss plot, and a weight changes plot.
    
 - You can change activation functions by changing the string inside the NeuralNetwork instance. I have used all three activation functions in the program and in the plots.
 - You can change the number of iterations by modifying the constant `NUM_ITERATIONS` capitalized at the very top of the program.

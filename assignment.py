@@ -58,7 +58,7 @@ class NeuralNetwork:
         os: Number of neurons in the output layer (1 for our regression approach).
     """
 
-    def __init__(self, input_size, hidden_size, output_size, activation_function="sigmoid", gamma=0.9):
+    def __init__(self, input_size, hidden_size, output_size=1, activation_function="sigmoid", gamma=0.9):
 
         self.Z_output = None
         self.A_hidden = None
@@ -183,7 +183,7 @@ class NeuralNetwork:
             # Backward propagation
             dW_input_hidden, db_hidden, dW_hidden_output, db_output = self.backward_propagation(X, target_output)
 
-            # Momentum updates
+            # Momentum updates: weight corrections
             self.velocity_weights_input_hidden = self.gamma * self.velocity_weights_input_hidden + learning_rate * dW_input_hidden
             self.weights_input_hidden -= self.velocity_weights_input_hidden
 
@@ -197,17 +197,7 @@ class NeuralNetwork:
             self.bias_output -= self.velocity_bias_output
 
     def mean_squared_error(self, y_true, y_pred):
-        """Computes the Mean Squared Error AKA Loss."""
         return 1 / 2 * np.mean((y_true - y_pred) ** 2)
-
-    def plot_loss(self, num_iterations, learning_rate):
-        """Plots the loss over iterations."""
-        plt.plot(self.loss_history)
-        plt.title('Loss for ' + str(num_iterations) + ' iterations (lr= ' + str(learning_rate) + ') for ' + self.activation_function + ' Activation Function')
-        plt.xlabel('Number of Iterations')
-        plt.ylabel('Loss')
-        plt.show()
-
 
 if __name__ == "__main__":
     preprocessed_data = WineQualityDataPreprocessor()

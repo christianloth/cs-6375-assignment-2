@@ -46,8 +46,8 @@ After setting up the environment and installing the necessary dependencies:
     python assignment.py
     ```
    
-- You can change activation functions by changing the string inside the NeuralNetwork instance. It is a parameter.
-- You can change the learning rate, and number of iterations by modifying the constants `NUM_ITERATIONS` and `LEARNING_RATE` capitalized at the very top of the program.
+- You can change activation functions by changing the string inside the NeuralNetwork instance.
+- You can change the number of iterations by modifying the constant `NUM_ITERATIONS` capitalized at the very top of the program.
 - We are using an 80/20 split for training and testing data.
    
 ## Results

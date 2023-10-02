@@ -5,12 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 NUM_ITERATIONS = 1000
-LEARNING_RATE = 0.1
+
 
 class WineQualityDataPreprocessor:
 
     def __init__(self):
-        # Load the datasets
         self.red_wine = pd.read_csv('https://raw.githubusercontent.com/christianloth/cs-6375-public-files/main/wine%2Bquality/winequality-red.csv', sep=';')
         self.white_wine = pd.read_csv('https://raw.githubusercontent.com/christianloth/cs-6375-public-files/main/wine%2Bquality/winequality-white.csv', sep=';')
 
@@ -30,7 +29,7 @@ class WineQualityDataPreprocessor:
         X = combined_data.drop('quality', axis=1)
         y = combined_data['quality']
 
-        # Normalize the data
+        # Normalize the data with sklearn
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
 
@@ -52,7 +51,7 @@ class NeuralNetwork:
         output_size (int): Number of neurons in the output layer.
         activation_function (str): Type of activation function to be used in the hidden layer.
 
-    Matrix notation:
+    Matrix notation documentation:
         ss: Number of samples in the dataset.
         is: Number of features (in this case, 12).
         hs: Number of neurons in the hidden layer.
@@ -61,7 +60,6 @@ class NeuralNetwork:
 
     def __init__(self, input_size, hidden_size, output_size, activation_function="sigmoid", gamma=0.9):
 
-        # Network architecture
         self.Z_output = None
         self.A_hidden = None
         self.Z_hidden = None
@@ -69,7 +67,6 @@ class NeuralNetwork:
         self.hidden_size = hidden_size  # hs
         self.output_size = output_size  # os
 
-        # Activation function selection
         self.activation_function = activation_function
 
         # Weights and biases initialization
@@ -79,15 +76,15 @@ class NeuralNetwork:
         self.weights_hidden_output = np.random.randn(self.hidden_size, self.output_size) * 0.01  # weights from hidden to output
         self.bias_output = np.zeros((1, self.output_size))
 
-        self.loss_history = []  # List to store loss values over epochs
+        self.loss_history = []  # List to store loss values over iterations
 
-        # Here is my optimizer: Momentium
+        # Here is my optimizer to satisfy project requirements: Momentum
         # Velocity terms for Momentum
         self.velocity_weights_input_hidden = np.zeros_like(self.weights_input_hidden)
         self.velocity_bias_hidden = np.zeros_like(self.bias_hidden)
         self.velocity_weights_hidden_output = np.zeros_like(self.weights_hidden_output)
         self.velocity_bias_output = np.zeros_like(self.bias_output)
-        # Momentum parameter
+        # Momentum gamma parameter
         self.gamma = gamma
 
     # Activation functions and their derivatives
@@ -150,7 +147,7 @@ class NeuralNetwork:
 
         # Compute the derivative of the loss w.r.t Net_output
         # dZ_output: (ss, os)
-        dZ_output = self.Z_output - target_output
+        dZ_output = self.Z_output - target_output  # dL/dZ
 
         # Compute the derivatives of loss w.r.t weights and biases between hidden and output layer
         # dW_hidden_output: (hs, os)
@@ -160,16 +157,16 @@ class NeuralNetwork:
 
         # Compute the derivative of the loss w.r.t A_hidden
         # dA_hidden: (ss, hs)
-        dA_hidden = np.dot(dZ_output, self.weights_hidden_output.T)
+        dA_hidden = np.dot(dZ_output, self.weights_hidden_output.T)  # dA/dZ
 
         # Compute the derivative of the loss w.r.t Z_hidden
         # dZ_hidden: (ss, hs)
-        dZ_hidden = dA_hidden * self.activation_derivative(self.Z_hidden)
+        dZ_hidden = dA_hidden * self.activation_derivative(self.Z_hidden)  # dL/dZ
 
         # Compute the derivatives w.r.t weights and biases between input and hidden layer
         # dW_input_hidden: (is, hs)
         # db_hidden: (1, hs)
-        dW_input_hidden = (1 / ss) * np.dot(X.T, dZ_hidden)
+        dW_input_hidden = (1 / ss) * np.dot(X.T, dZ_hidden)  # dW/dZ
         db_hidden = (1 / ss) * np.sum(dZ_hidden, axis=0, keepdims=True)
 
         return dW_input_hidden, db_hidden, dW_hidden_output, db_output
@@ -201,18 +198,16 @@ class NeuralNetwork:
 
     def mean_squared_error(self, y_true, y_pred):
         """Computes the Mean Squared Error AKA Loss."""
-        return 1/2 * np.mean((y_true - y_pred) ** 2)
+        return 1 / 2 * np.mean((y_true - y_pred) ** 2)
 
     def plot_loss(self, num_iterations, learning_rate):
-        """Plot the loss over epochs."""
+        """Plots the loss over iterations."""
         plt.plot(self.loss_history)
         plt.title('Loss for ' + str(num_iterations) + ' iterations (lr= ' + str(learning_rate) + ') for ' + self.activation_function + ' Activation Function')
         plt.xlabel('Number of Iterations')
         plt.ylabel('Loss')
         plt.show()
 
-# Test the initialization
-nn_sigmoid = NeuralNetwork(input_size=12, hidden_size=8, output_size=1)
 
 if __name__ == "__main__":
     preprocessed_data = WineQualityDataPreprocessor()
@@ -227,12 +222,14 @@ if __name__ == "__main__":
     # Figure for Loss plots
     fig_loss, axes_loss = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
     fig_loss.tight_layout(pad=5.0)
-    fig_loss.suptitle('Loss with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
+    fig_loss.subplots_adjust(top=0.9)
+    fig_loss.suptitle(f'Loss with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
 
     # Figure for Residual plots
     fig_residuals, axes_residuals = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
     fig_residuals.tight_layout(pad=5.0)
-    fig_residuals.suptitle('Residuals with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
+    fig_residuals.subplots_adjust(top=0.9)
+    fig_residuals.suptitle(f'Residuals with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
 
     for i, lr in enumerate(learning_rates):
         for j, act_fn in enumerate(activation_functions):
@@ -273,4 +270,3 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(results, columns=["Learning Rate", "Activation Function", "Training MSE", "Test MSE"])
     print(df)
-

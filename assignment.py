@@ -170,7 +170,7 @@ class NeuralNetwork:
         # dW_input_hidden: (is, hs)
         # db_hidden: (1, hs)
         dW_input_hidden = (1 / ss) * np.dot(X.T, dZ_hidden)  # dW/dZ
-        db_hidden = (1 / ss) * np.sum(dZ_hidden, axis=0, keepdims=True)
+        db_hidden = (1 / ss) * np.sum(dZ_hidden, axis=0, keepdims=True)  # dL/db
 
         return dW_input_hidden, db_hidden, dW_hidden_output, db_output
 
@@ -189,13 +189,10 @@ class NeuralNetwork:
             # Momentum updates: weight corrections
             self.velocity_weights_input_hidden = self.gamma * self.velocity_weights_input_hidden + learning_rate * dW_input_hidden
             self.weights_input_hidden -= self.velocity_weights_input_hidden
-
             self.velocity_bias_hidden = self.gamma * self.velocity_bias_hidden + learning_rate * db_hidden
             self.bias_hidden -= self.velocity_bias_hidden
-
             self.velocity_weights_hidden_output = self.gamma * self.velocity_weights_hidden_output + learning_rate * dW_hidden_output
             self.weights_hidden_output -= self.velocity_weights_hidden_output
-
             self.velocity_bias_output = self.gamma * self.velocity_bias_output + learning_rate * db_output
             self.bias_output -= self.velocity_bias_output
 

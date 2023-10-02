@@ -7,7 +7,7 @@ The target variable is the quality of wine on a scale of 1 to 10.
 
 ## Requirements
 
-- Python 3.11.1 or higher
+- Python 3.11 or higher
 - `pipenv` for managing dependencies and the virtual environment.
 - `numpy`
 - `pandas`
@@ -45,6 +45,8 @@ After setting up the environment and installing the necessary dependencies:
     ```bash
     python assignment.py
     ```
+   - Note you must wait after executing the command. It can take a bit for the plots to display depending on how fast your processor is.
+   - 3 plots will be displayed, a loss plot, a weight changes plot, and a residuals plot.
    
 - You can change activation functions by changing the string inside the NeuralNetwork instance. I have used all three activation functions in the program and in the plots.
 - You can change the number of iterations by modifying the constant `NUM_ITERATIONS` capitalized at the very top of the program.

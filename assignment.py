@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 
-NUM_ITERATIONS = 1000
+NUM_ITERATIONS = 1000  # Number of iterations for training constant
 
 
 class WineQualityDataPreprocessor:

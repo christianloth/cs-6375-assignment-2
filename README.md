@@ -2,7 +2,7 @@
 
 This is for the NN assignment for CS6375 by Christian Loth.
 This project predicts wine quality using a feedforward neural network.
-The wine dataset contains different physicochemical properties of wines, categorized as red and white.
+The wine dataset contains different properties of wines, categorized as red and white.
 The target variable is the quality of wine on a scale of 1 to 10.
 
 ## Requirements
@@ -46,7 +46,7 @@ After setting up the environment and installing the necessary dependencies:
     python assignment.py
     ```
    
-- You can change activation functions by changing the string inside the NeuralNetwork instance.
+- You can change activation functions by changing the string inside the NeuralNetwork instance. I have used all three activation functions in the program and in the plots.
 - You can change the number of iterations by modifying the constant `NUM_ITERATIONS` capitalized at the very top of the program.
 - We are using an 80/20 split for training and testing data.
    

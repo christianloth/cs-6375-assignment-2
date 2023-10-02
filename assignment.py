@@ -87,6 +87,9 @@ class NeuralNetwork:
         # Momentum gamma parameter
         self.gamma = gamma
 
+        self.weights_input_hidden_history = []
+        self.weights_hidden_output_history = []
+
     # Activation functions and their derivatives
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
@@ -196,6 +199,10 @@ class NeuralNetwork:
             self.velocity_bias_output = self.gamma * self.velocity_bias_output + learning_rate * db_output
             self.bias_output -= self.velocity_bias_output
 
+            # Store weights for plotting
+            self.weights_input_hidden_history.append(self.weights_input_hidden.copy())
+            self.weights_hidden_output_history.append(self.weights_hidden_output.copy())
+
     def mean_squared_error(self, y_true, y_pred):
         return 1 / 2 * np.mean((y_true - y_pred) ** 2)
 
@@ -221,6 +228,12 @@ if __name__ == "__main__":
     fig_residuals.subplots_adjust(top=0.9)
     fig_residuals.suptitle(f'Residuals with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
 
+    # Figure for Weight changes plots
+    fig_weights, axes_weights = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 10))
+    fig_weights.tight_layout(pad=5.0)
+    fig_weights.subplots_adjust(top=0.9)
+    fig_weights.suptitle(f'Weight Changes with Momentum of Different Activation Functions and Learning Rates ({NUM_ITERATIONS} iterations)', fontsize=16)
+
     for i, lr in enumerate(learning_rates):
         for j, act_fn in enumerate(activation_functions):
             nn = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function=act_fn)
@@ -243,6 +256,8 @@ if __name__ == "__main__":
             axes_loss[i, j].set_xlabel('Iterations')
             axes_loss[i, j].set_ylabel('Loss')
 
+            results.append((lr, act_fn, mse_train, mse_test))
+
             # Residual plot
             residuals_train = y_train_reshaped - predictions_train
             residuals_test = y_test_reshaped - predictions_test
@@ -254,7 +269,17 @@ if __name__ == "__main__":
             axes_residuals[i, j].set_ylabel('Residuals')
             axes_residuals[i, j].legend()
 
-            results.append((lr, act_fn, mse_train, mse_test))
+            # Plot weight changes
+            # for each set of weights at each iteration, this computes the sum of the absolute values of all weights in that set and plots that sum over time.
+            # Plotting each individual weight with a separate line on the graph could be way too messy.
+            weight_changes_input_hidden = [np.sum(np.abs(w)) for w in nn.weights_input_hidden_history]
+            weight_changes_hidden_output = [np.sum(np.abs(w)) for w in nn.weights_hidden_output_history]
+            axes_weights[i, j].plot(weight_changes_input_hidden, label="Input to Hidden Weights")
+            axes_weights[i, j].plot(weight_changes_hidden_output, label="Hidden to Output Weights", linestyle='--')
+            axes_weights[i, j].set_title(f'Weight Changes: LR={lr}, AF={act_fn}')
+            axes_weights[i, j].set_xlabel('Iterations')
+            axes_weights[i, j].set_ylabel('Sum of Absolute Weights')
+            axes_weights[i, j].legend()
 
     plt.show()
 

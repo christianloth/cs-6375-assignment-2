@@ -5,6 +5,9 @@ This project predicts wine quality using a feedforward neural network.
 The wine dataset contains different properties of wines, categorized as red and white.
 The target variable is the quality of wine on a scale of 1 to 10.
 
+Here is my dataset:
+[Wine Quality Dataset](https://archive.ics.uci.edu/dataset/186/wine+quality)
+
 ## Requirements
 
 - Python 3.11 or higher
@@ -53,6 +56,4 @@ After setting up the environment and installing the necessary dependencies:
 - We are using an 80/20 split for training and testing data.
    
 ## Results
-
-The results are presented as a loss function graph for each of the activation functions on the test data.
-I have also printed out the first 10 rows for predicted values vs. actual values to stdout.
+The results are printed out in a tabular format. Plots are also displayed.

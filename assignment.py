@@ -214,47 +214,44 @@ class NeuralNetwork:
 # Test the initialization
 nn_sigmoid = NeuralNetwork(input_size=12, hidden_size=8, output_size=1)
 
-
 if __name__ == "__main__":
     preprocessed_data = WineQualityDataPreprocessor()
     X_train, X_test, y_train, y_test = preprocessed_data.preprocess()
     y_train_reshaped = y_train.values.reshape(-1, 1)
     y_test_reshaped = y_test.values.reshape(-1, 1)
 
-    nn_sigmoid = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="sigmoid")
-    nn_tanh = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="tanh")
-    nn_relu = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="relu")
+    learning_rates = [0.001, 0.01, 0.1]
+    activation_functions = ["sigmoid", "tanh", "relu"]
+    results = []
 
-    # Train the neural networks
-    nn_sigmoid.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
-    nn_tanh.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
-    nn_relu.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
+    fig, axes = plt.subplots(len(learning_rates), len(activation_functions), figsize=(15, 15))
+    fig.tight_layout(pad=5.0)
+    fig.suptitle('Loss with Momentum of Different Activation Functions and Learning Rates', fontsize=16, y=1.05)
 
-    predictions_sigmoid = nn_sigmoid.forward_propagation(X_test)
-    predictions_tanh = nn_tanh.forward_propagation(X_test)
-    predictions_relu = nn_relu.forward_propagation(X_test)
+    for i, lr in enumerate(learning_rates):
+        for j, act_fn in enumerate(activation_functions):
+            nn = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function=act_fn)
+            nn.train(X_train, y_train_reshaped, NUM_ITERATIONS, lr)
 
-    print("Sigmoid Predictions:")
-    for i in range(10):
-        print("(Prediction, Actual): ({:.2f}, {})".format(predictions_sigmoid[i][0], y_test_reshaped[i][0]))
+            predictions_train = nn.forward_propagation(X_train)
+            mse_train = nn.mean_squared_error(y_train_reshaped, predictions_train)
 
-    print("\nTanh Predictions:")
-    for i in range(10):
-        print("(Prediction, Actual): ({:.2f}, {})".format(predictions_tanh[i][0], y_test_reshaped[i][0]))
+            predictions_test = nn.forward_propagation(X_test)
+            mse_test = nn.mean_squared_error(y_test_reshaped, predictions_test)
 
-    print("\nReLU Predictions:")
-    for i in range(10):
-        print("(Prediction, Actual): ({:.2f}, {})\n".format(predictions_relu[i][0], y_test_reshaped[i][0]))
+            print(f"Learning Rate: {lr}, Activation Function: {act_fn}")
+            print(f"Training MSE: {mse_train:.3f}")
+            print(f"Test MSE: {mse_test:.3f}")
+            print("=" * 40)
 
-    # Report training accuracy here
-    mse_sigmoid = nn_sigmoid.mean_squared_error(y_test_reshaped, predictions_sigmoid)
-    print(f"Mean Squared Error on sigmoid test data: {mse_sigmoid:.3f}")
-    mse_tanh = nn_tanh.mean_squared_error(y_test_reshaped, predictions_tanh)
-    print(f"Mean Squared Error on tanh test data: {mse_tanh:.3f}")
-    mse_relu = nn_relu.mean_squared_error(y_test_reshaped, predictions_relu)
-    print(f"Mean Squared Error on ReLU test data: {mse_relu:.3f}")
+            axes[i, j].plot(nn.loss_history)
+            axes[i, j].set_title(f'Momentum: LR={lr}, AF={act_fn}')
+            axes[i, j].set_xlabel('Iterations')
+            axes[i, j].set_ylabel('Loss')
 
-    # Plot the loss
-    nn_sigmoid.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
-    nn_tanh.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
-    nn_relu.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
+            results.append((lr, act_fn, mse_train, mse_test))
+
+    plt.show()
+
+    df = pd.DataFrame(results, columns=["Learning Rate", "Activation Function", "Training MSE", "Test MSE"])
+    print(df)

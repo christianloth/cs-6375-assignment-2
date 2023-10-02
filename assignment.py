@@ -4,6 +4,9 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 
+NUM_ITERATIONS = 1000
+LEARNING_RATE = 0.1
+
 class WineQualityDataPreprocessor:
 
     def __init__(self):
@@ -56,7 +59,7 @@ class NeuralNetwork:
         os: Number of neurons in the output layer (1 for our regression approach).
     """
 
-    def __init__(self, input_size, hidden_size, output_size, activation_function="sigmoid"):
+    def __init__(self, input_size, hidden_size, output_size, activation_function="sigmoid", gamma=0.9):
 
         # Network architecture
         self.Z_output = None
@@ -78,6 +81,15 @@ class NeuralNetwork:
 
         self.loss_history = []  # List to store loss values over epochs
 
+        # Here is my optimizer: Momentium
+        # Velocity terms for Momentum
+        self.velocity_weights_input_hidden = np.zeros_like(self.weights_input_hidden)
+        self.velocity_bias_hidden = np.zeros_like(self.bias_hidden)
+        self.velocity_weights_hidden_output = np.zeros_like(self.weights_hidden_output)
+        self.velocity_bias_output = np.zeros_like(self.bias_output)
+        # Momentum parameter
+        self.gamma = gamma
+
     # Activation functions and their derivatives
     def sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
@@ -97,7 +109,7 @@ class NeuralNetwork:
 
     def relu_derivative(self, x):
         dx = np.array(x, copy=True)
-        dx[x <= 0] = 0
+        dx[x <= 0] = 0  # technically DNE at x=0 though
         dx[x > 0] = 1
         return dx
 
@@ -174,56 +186,75 @@ class NeuralNetwork:
             # Backward propagation
             dW_input_hidden, db_hidden, dW_hidden_output, db_output = self.backward_propagation(X, target_output)
 
-            # Update weights and biases
-            self.weights_input_hidden -= learning_rate * dW_input_hidden
-            self.bias_hidden -= learning_rate * db_hidden
-            self.weights_hidden_output -= learning_rate * dW_hidden_output
-            self.bias_output -= learning_rate * db_output
+            # Momentum updates
+            self.velocity_weights_input_hidden = self.gamma * self.velocity_weights_input_hidden + learning_rate * dW_input_hidden
+            self.weights_input_hidden -= self.velocity_weights_input_hidden
+
+            self.velocity_bias_hidden = self.gamma * self.velocity_bias_hidden + learning_rate * db_hidden
+            self.bias_hidden -= self.velocity_bias_hidden
+
+            self.velocity_weights_hidden_output = self.gamma * self.velocity_weights_hidden_output + learning_rate * dW_hidden_output
+            self.weights_hidden_output -= self.velocity_weights_hidden_output
+
+            self.velocity_bias_output = self.gamma * self.velocity_bias_output + learning_rate * db_output
+            self.bias_output -= self.velocity_bias_output
 
     def mean_squared_error(self, y_true, y_pred):
         """Computes the Mean Squared Error AKA Loss."""
         return 1/2 * np.mean((y_true - y_pred) ** 2)
 
-    def plot_loss(self):
+    def plot_loss(self, num_iterations, learning_rate):
         """Plot the loss over epochs."""
         plt.plot(self.loss_history)
-        plt.title('Loss over epochs')
-        plt.xlabel('Epochs')
+        plt.title('Loss for ' + str(num_iterations) + ' iterations (lr= ' + str(learning_rate) + ') for ' + self.activation_function + ' Activation Function')
+        plt.xlabel('Number of Iterations')
         plt.ylabel('Loss')
         plt.show()
 
-    def predict(self, X):
-        """Predicts the output using forward propagation."""
-        return self.forward_propagation(X)
-
 # Test the initialization
-nn = NeuralNetwork(input_size=12, hidden_size=8, output_size=1)
+nn_sigmoid = NeuralNetwork(input_size=12, hidden_size=8, output_size=1)
 
 
 if __name__ == "__main__":
     preprocessed_data = WineQualityDataPreprocessor()
     X_train, X_test, y_train, y_test = preprocessed_data.preprocess()
-    nn = NeuralNetwork(input_size=12, hidden_size=15, output_size=1, activation_function="sigmoid")
+    y_train_reshaped = y_train.values.reshape(-1, 1)
+    y_test_reshaped = y_test.values.reshape(-1, 1)
 
-    # 3. Train the neural network
-    epochs = 1000
-    learning_rate = 0.01
-    nn.train(X_train, y_train.values.reshape(-1, 1), epochs, learning_rate)
+    nn_sigmoid = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="sigmoid")
+    nn_tanh = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="tanh")
+    nn_relu = NeuralNetwork(input_size=12, hidden_size=8, output_size=1, activation_function="relu")
 
-    # 4. Predict on test data
-    predictions = nn.forward_propagation(X_test)
-    
-    #print(f"Predictions: {predictions}")
-    #print(f"Actual: {y_test.values.reshape(-1, 1)}")
-    # do this but in a for loop printing predictions and actual next to eachother
-    actuals = y_test.values.reshape(-1, 1)
+    # Train the neural networks
+    nn_sigmoid.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
+    nn_tanh.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
+    nn_relu.train(X_train, y_train_reshaped, NUM_ITERATIONS, LEARNING_RATE)
 
-    for i in range(len(predictions)):
-        print("(Prediction, Actual): ({}, {})".format(predictions[i][0], actuals[i][0]))
+    predictions_sigmoid = nn_sigmoid.forward_propagation(X_test)
+    predictions_tanh = nn_tanh.forward_propagation(X_test)
+    predictions_relu = nn_relu.forward_propagation(X_test)
 
-    # 5. Evaluate the performance
-    mse = nn.mean_squared_error(y_test.values.reshape(-1, 1), predictions)
-    print(f"Mean Squared Error on Test Data: {mse}")
+    print("Sigmoid Predictions:")
+    for i in range(10):
+        print("(Prediction, Actual): ({:.2f}, {})".format(predictions_sigmoid[i][0], y_test_reshaped[i][0]))
+
+    print("\nTanh Predictions:")
+    for i in range(10):
+        print("(Prediction, Actual): ({:.2f}, {})".format(predictions_tanh[i][0], y_test_reshaped[i][0]))
+
+    print("\nReLU Predictions:")
+    for i in range(10):
+        print("(Prediction, Actual): ({:.2f}, {})\n".format(predictions_relu[i][0], y_test_reshaped[i][0]))
+
+    # Report training accuracy here
+    mse_sigmoid = nn_sigmoid.mean_squared_error(y_test_reshaped, predictions_sigmoid)
+    print(f"Mean Squared Error on sigmoid test data: {mse_sigmoid:.3f}")
+    mse_tanh = nn_tanh.mean_squared_error(y_test_reshaped, predictions_tanh)
+    print(f"Mean Squared Error on tanh test data: {mse_tanh:.3f}")
+    mse_relu = nn_relu.mean_squared_error(y_test_reshaped, predictions_relu)
+    print(f"Mean Squared Error on ReLU test data: {mse_relu:.3f}")
 
     # Plot the loss
-    nn.plot_loss()
+    nn_sigmoid.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
+    nn_tanh.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
+    nn_relu.plot_loss(num_iterations=NUM_ITERATIONS, learning_rate=LEARNING_RATE)
